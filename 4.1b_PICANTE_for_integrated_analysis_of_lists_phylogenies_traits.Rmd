@@ -1,4 +1,5 @@
 ---
+author: Abigail I. Gutierrez 
 title: "Combining Traits, Community Diversity, and Phylogeny with PICANTE"
 output: html_notebook
 ---

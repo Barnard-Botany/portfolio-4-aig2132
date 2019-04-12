@@ -1,0 +1,207 @@
+---
+author: Abigail I. Gutierrez 
+title: "R Notebook"
+output: html_notebook
+---
+
+## Mini-exercise #2
+
+Let's build and combine your new skills in looking up species occurrence data with what we learned about mapping. 
+
+Going back to our peninsula, here are a bunch of species that are endemic to that area.
+
+Spergularia melanocaulos
+Petrocoptis grandiflora
+Spergula viscosa
+Minuartia cerastiifolia
+Minuartia recurva
+Petrocoptis hispanica
+Petrocoptis pyrenaica
+
+Choose any two, and do the following:
+1. Minuartia cerastiifolia
+2. Petrocoptis grandiflora 
+
+WORK WITH TAXISE
+1. Look up - are they accepted names or are they synonyms?
+
+Minuartia cerastiifolia is an accepted name for Minuartia cerastiifolia. According to the code I put in below however for the code on the chunk below this I got that the status was SYNONYM. Their species name is Facchinia cerastiifolia. 
+
+Petrocoptis pyrenaica  is an accepted name for Petrocoptis pyrenaica A.Braun ex Walp. 
+
+```{r}
+library(BIEN)
+library(ape) # Package for working with phylogenies in R
+library(maps) # Useful for making quick maps of occurrences
+library(sp) # A package for spatial data
+library(raster)# Another package for spatial data 
+vignette("BIEN") 
+results=gnr_resolve(names="Minuartia cerastiifolia")
+head(results$matched_name)
+results=gnr_resolve(names="Petrocoptis pyrenaica")
+head(results$matched_name)
+
+```
+
+2. Look up the two plant taxa. Are they both angiosperms?
+Minuartia cerastiifolia is in the phylum of Tracheophyta 
+
+Petrocoptis pyrenaica is in the phylum of Tracheophyta 
+```{r}
+
+classification(c("Minuartia cerastiifolia", "Petrocoptis grandiflora"), db="itis") 
+
+#Minuartia cerastiifolia 
+name="Minuartia cerastiifolia"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn 
+lapply(tsn, itis_acceptname) # there was an error for this line of code 
+
+name_lookup(q="Minuartia cerastiifolia")
+name_backbone(name="Minuartia cerastiifolia")
+name_usage(8998109) 
+
+#Here's another way to do that, in another database
+tax_name(q="Minuartia cerastiifolia", get="family", db="ncbi") 
+#here I got an error because it is reading as a character 
+
+#Petrocoptis pyrenaica
+name="Petrocoptis pyrenaica"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn 
+lapply(tsn, itis_acceptname) # there was an error for this line of code 
+
+name_lookup(q="Petrocoptis pyrenaica")
+name_backbone(name="Petrocoptis pyrenaica")
+name_usage(7267085)  
+
+```
+
+3. Angiosperm or otherwise, what plant family do they belong to?
+Minuartia cerastiifolia , Family: Caryophyllaceae 
+Petrocoptis pyrenaica, Family: Caryophyllaceae 
+
+```{r}
+tax_name(q="Minuartia cerastiifolia", get="family", db="ncbi") 
+ 
+tax_name(q="Petrocoptis grandifloras", get="family", db="ncbi")  
+
+
+```
+
+4. For at least one genus, look up all the species in that genus.
+For Petrocoptis pyrenaica, I looked at the genus of Petrocoptis it was able to retrieve data but got me nothing. For Minuartia I got 37 species that resulted in the genus Minuartia. 
+```{r}
+#Petrocoptis pyrenaica 
+downstream("Petrocoptis", downto="species", db="itis")
+
+#Minuartia cerastiifolia
+downstream("Minuartia", downto="species", db="itis")
+```
+
+
+5. For one species, look up to see if there are subspecies or other infraspecific forms.
+   the code resulted in 0 rows and 0 length which tell me that there are no subspecies or other infraspecific forms. 
+```{r}
+children(" Minuartia", db="col") 
+```
+
+
+WORK WITH RGBIF OR SPOCC
+6. For both, search and download species occurrence data; prepare as a data-frame
+
+```{r}
+#Minuartia cerastiifolia 
+Minuartia <- occ(q="Minuartia cerastiifolia", from="gbif", limit=50)
+Minuartia
+
+Minuartia.dat <- (Minuartia$gbif$data)
+head(Minuartia.dat)
+
+Minuartia.df <- occ2df(Minuartia)
+Minuartia.df
+
+dim(Minuartia.df)
+Minuartia.df <- Minuartia.df[complete.cases(Minuartia.df ),]
+dim(Minuartia.df)
+Minuartia.df
+
+
+#now working with the next data Petrocoptis pyrenaica  
+pyrenaica <- occ(q="Petrocoptis pyrenaica", from="gbif", limit=50)
+pyrenaica
+
+pyrenaica.dat <- (pyrenaica$gbif$data)
+head(pyrenaica.dat)
+
+pyrenaica.df <- occ2df(pyrenaica)
+pyrenaica.df
+
+dim(pyrenaica.df)
+pyrenaica.df<- pyrenaica.df[complete.cases(pyrenaica.df),]
+dim(pyrenaica.df)
+pyrenaica.df
+
+
+
+```
+
+7. Clean-up the data-frame:  remove occurrences with missing data and duplicates
+did that above 
+
+WORK WITH OCCURRENCE DATA, WORLDCLIM DATA AND MAPS
+8. Map occurrence data with a climate variable for one species on the peninsula
+
+```{r}
+P_pyrenaica <- BIEN_occurrence_species(species = "Petrocoptis pyrenaica") 
+P_pyrenaica_rangemap <- BIEN_ranges_load_species("Petrocoptis pyrenaica") 
+
+map('world', fill=T, col="grey", bg="light blue", xlim=c(-10,4), ylim=c(35,45))
+  plot(P_pyrenaica_rangemap, col="green", add= T) 
+
+  
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(P_pyrenaica[,c("longitude", "latitude")], pch = 24, cex = 0.5)
+
+```
+
+
+9. Also map that species with climate variables on a world map or European map. Are you convinced that the species is endemic to this peninsula? 
+```{r}
+peninsula.worldclim <- crop(all.worldclim, extent(-10, 4, 35, 45))
+plot(peninsula.worldclim[["bio1"]])
+```
+
+
+
+10. Returning to your results for #4 above, find another species with a range outside of the  peninsula. Download occurrence data and map on a world map. 
+  Minuartia macrocarpa 
+  
+```{r}
+P_macrocarpa  <- BIEN_occurrence_species(species = "Minuartia macrocarpa") 
+P_macrocarpa_rangemap <- BIEN_ranges_load_species("Minuartia macrocarpa") 
+P_macrocarpa_rangemap
+
+map('world', fill=T, col="grey", bg="light blue", xlim=c(-10,4), ylim=c(35,45))
+  plot(P_macrocarpa_rangemap, col="green", add= T) 
+
+  
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(P_macrocarpa[,c("longitude", "latitude")], pch = 24, cex = 0.5)
+
+plot(all.worldclim[["bio1"]])
+points(P_macrocarpa[,c("longitude", "latitude")], pch = 24, cex = 0.5)
+```
+
+
+11. Then re-map on an appropriately cropped map.
+```{r}
+plot(all.worldalt[["alt"]], xlim=c(-150,-100),ylim=c(50,100))
+```
+
+
+ONE LAST THING
+12. Don't forget to identify the peninsula that we are working with!
+We are working with the Iberian Peninsula.

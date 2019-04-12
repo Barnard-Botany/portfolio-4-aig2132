@@ -84,9 +84,9 @@ There are a lot of details here, but important to know that the temperature data
 ```{r}
 all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
 all.worldalt <- raster::getData("worldclim", res = 10, var = "alt")
-plot(all.worldclim[["bio1"]])
-plot(all.worldclim[["bio12"]])
-plot(all.worldalt[["alt"]])
+plot(all.worldclim[["bio1"]]) #temperature is coded as bio1
+plot(all.worldclim[["bio12"]]) #precipitation is coded as bio12 
+plot(all.worldalt[["alt"]]) #altitude is coded as alt 
 ```
 
 Climate data can be combined with occurrence data downloaded from BIEN, or any geo-coded data.
@@ -125,13 +125,14 @@ plot(peninsula.worldclim[["bio1"]])
 #### Mini-Exercise #1 
 
 Answer the questions about this peninsula example. Then do your own example from Latin America:
-1. Where in the world is the peninsula mapped above?
+1. Where in the world is the peninsula mapped above? 
+The peninsula mapped above is SPAIN 
 2. Is altitude a climate variable? How do the peninsula maps plotted above support your answer?
+The altitude seems to be variable but the climate seems to be constant given by the complete green coloration of the area. 
 3. Make a South America map with occurrence data for Jungia pauciflora & J. polita and:
           a. Crop the map to allow discerning more detail in the two ranges
           b. Also include altitude data or climate data, with occurrence points overlayed.
-
-
+given by the code done in class below. 1
 
 ```{r}
 #Trimming data to match South American region
@@ -169,6 +170,22 @@ results=gnr_resolve(names="Solanum pimpinelifolia")
 head(results$matched_name)
 results=gnr_resolve(names="Sequoiadendron gigantium")
 head(results$matched_name)
+
+#for porfolio part 4.3 
+results=gnr_resolve(names="Castanea dentata")
+head(results$matched_name)
+name="Castanea dentata"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn 
+lapply(tsn, itis_acceptname) 
+
+
+results=gnr_resolve(names="Acer")
+head(results$matched_name)
+name="Acer"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn 
+lapply(tsn, itis_acceptname) 
 ```
 
 
@@ -185,6 +202,8 @@ tsn=get_tsn(name, accepted=FALSE)
 tsn
 #The output suggests checking the itis database for the accepted name
 lapply(tsn, itis_acceptname)
+
+#this is where you should add a 1 so that the code ends 
 ```
 
 ```{r}
@@ -392,24 +411,144 @@ Petrocoptis hispanica
 Petrocoptis pyrenaica
 
 Choose any two, and do the following:
+1. Spergularia melanocaulos
+2. Petrocoptis grandiflora 
 
 WORK WITH TAXISE
 1. Look up - are they accepted names or are they synonyms?
+Spergularia melanocaulos Merino is a synonym for Spergularia melanocaulos 
+
+```{r}
+library(BIEN)
+library(ape) # Package for working with phylogenies in R
+library(maps) # Useful for making quick maps of occurrences
+library(sp) # A package for spatial data
+library(raster)# Another package for spatial data 
+vignette("BIEN") 
+results=gnr_resolve(names="Minuartia cerastiifolia")
+head(results$matched_name)
+results=gnr_resolve(names="Petrocoptis grandiflora")
+head(results$matched_name)
+
+```
+
 2. Look up the two plant taxa. Are they both angiosperms?
+According to the code it traced bot to NA. I am not sure what this information means. 
+```{r}
+
+classification(c("Minuartia cerastiifolia", "Petrocoptis grandiflora"), db="itis") 
+
+name="Minuartia cerastiifolia"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn 
+lapply(tsn, itis_acceptname)
+
+
+```
+
 3. Angiosperm or otherwise, what plant family do they belong to?
+I am not sure if there is no data for the taxa or if I am doing something wrong but I keep getting NA for family for each species. 
+```{r}
+tax_name(q="Minuartia cerastiifolia", get="family", db="ncbi") 
+ 
+tax_name(q="Petrocoptis grandifloras", get="family", db="ncbi")  
+
+
+```
+
 4. For at least one genus, look up all the species in that genus.
+There was no species given to me by the data frame 
+
+
 5. For one species, look up to see if there are subspecies or other infraspecific forms.
+I was unable to code for this because there were no subspecies shown 
+
 
 WORK WITH RGBIF OR SPOCC
 6. For both, search and download species occurrence data; prepare as a data-frame
+
+```{r}
+Grandifloras <- occ(q="Petrocoptis grandifloras", from="gbif", limit=50)
+Grandifloras
+
+Grandifloras.dat <- (Grandifloras$gbif$data)
+head(Grandifloras.dat)
+
+Grandifloras.df <- occ2df(Grandifloras)
+Grandifloras.df
+
+dim(Grandifloras.df)
+Grandifloras.df <- Grandifloras.df[complete.cases(Grandifloras.df ),]
+dim(Grandifloras.df)
+Grandifloras.df
+
+
+#now working with the next data Spergularia melanocaulos 
+DawnRedwood2 <- occ(q="Spergularia melanocaulos", from="gbif", limit=50)
+DawnRedwood2
+
+DawnRedwood2.dat <- (DawnRedwood2$gbif$data)
+head(DawnRedwood2.dat)
+
+DawnRedwood.df2 <- occ2df(DawnRedwood2)
+DawnRedwood.df2
+
+dim(DawnRedwood.df2)
+DawnRedwood.df2 <- DawnRedwood.df2[complete.cases(DawnRedwood.df2),]
+dim(DawnRedwood.df2)
+DawnRedwood.df2
+
+
+
+```
+
 7. Clean-up the data-frame:  remove occurrences with missing data and duplicates
 
 
 WORK WITH OCCURRENCE DATA, WORLDCLIM DATA AND MAPS
 8. Map occurrence data with a climate variable for one species on the peninsula
-9. Also map that species with climate variables on a world map or European map. Are you convinced that the species is endemic to this peninsula?
+
+here I decided to change to use another species because for the species I was working with I could not get significant data. 
+```{r}
+P_hispanica <- BIEN_occurrence_species(species = "Petrocoptis hispanica") 
+P_hispanica_rangemap <- BIEN_ranges_load_species("Petrocoptis hispanica") 
+
+
+
+
+```
+
+
+9. Also map that species with climate variables on a world map or European map. Are you convinced that the species is endemic to this peninsula? 
+```{r}
+P_hispanica <- BIEN_occurrence_species(species = "Petrocoptis hispanica") 
+P_hispanica_rangemap <- BIEN_ranges_load_species("Petrocoptis hispanica")  
+
+plot(all.worldclim[["bio1"]])
+points(P_hispanica[,c("longitude", "latitude")], pch = 24, cex = 0.5) 
+```
+
+
+
 10. Returning to your results for #4 above, find another species with a range outside of the  peninsula. Download occurrence data and map on a world map. 
+somwhow there is an error that occurs in the lists where its telling me its trying to get the polygons but I dont know what it is reffering to. 
+```{r}
+M_recurva <- BIEN_occurrence_species(species = "Minuartia recurva") 
+M_recurva_rangemap <- BIEN_ranges_load_species("Minuartia recurva")  
+
+plot(all.worldclim[["bio1"]])
+points(P_hispanica[,c("longitude", "latitude")], pch = 24, cex = 0.5)  
+
+```
+
+
 11. Then re-map on an appropriately cropped map.
+```{r}
+SAmerica.worldalt <- crop(all.worldalt, extent(-75, -50, -30, -15))
+plot(SAmerica.worldalt[["alt"]])
+```
+
 
 ONE LAST THING
 12. Don't forget to identify the peninsula that we are working with!
+We are working with the Iberian Peninsula. 
