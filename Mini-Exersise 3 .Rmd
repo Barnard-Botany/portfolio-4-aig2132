@@ -6,6 +6,12 @@ output: html_notebook
 
 ## Mini-exercise 3
 
+```{r}
+library(labdsv)
+library(plyr)
+```
+
+
 After using all the code above and perusing results, review what you've done with the PICANTE package by going back and making comparisons with the VEGAN package, which doesn't ever consider phylogeny. Simply work with the fake communities created: one, three, two and five.
 
 Then, leave fake communities behind! Do one of the following. You will need to write proper code and show results (with annotations) of your work in this notebook or create a new notebook: 
@@ -33,45 +39,43 @@ Bronx=read.csv("Bronx.csv")
 Bronx
 head(Bronx)
 tail(Bronx) 
-speciesID1=paste(Bronx$Common.Name, Bronx$Scientific.Name, sep=" ")
-speciesID1
 
 Bronx_list=count(Bronx)
+Bronx_list <- subset(Bronx_list[,2:3])
 head(Bronx_list)
 Bronx_list=data.frame(Bronx_list)
 Bronx_list=data.frame("Bronx", Bronx_list)
 head(Bronx_list) 
-names(Bronx_list)<-c("ListID", "SpeciesID1", "Freq") 
+names(Bronx_list)<-c("ListID", "SpeciesID", "Freq") 
 
 #Brooklyn Top 10 Species 
 Brooklyn=read.csv("Brooklyn.csv")
 Brooklyn
 head(Brooklyn)
 tail(Brooklyn) 
-speciesID2=paste(Brooklyn$Common.Name, Brooklyn$Scientific.Name, sep=" ")
-speciesID2
-Brooklyn_list=count(Brooklyn)  
 
+
+Brooklyn_list=count(Brooklyn)  
+Brooklyn_list <- subset(Brooklyn_list[,2:3]) 
 head(Brooklyn_list)
 Brooklyn_list=data.frame(Brooklyn_list)
 Brooklyn_list=data.frame("Brooklyn", Brooklyn_list)
 head(Brooklyn_list) 
-names(Brooklyn_list)<-c("ListID", "SpeciesID2", "Freq") 
+names(Brooklyn_list)<-c("ListID", "SpeciesID", "Freq") 
 
 #Staten Island Top 10 Species
 StatenIsland=read.csv("StatenI.csv")
 StatenIsland
 head(StatenIsland)
 tail(StatenIsland) 
-speciesID3=paste(StatenIsland$Common.Name, StatenIsland$Scientific.Name, sep=" ")
-speciesID3
-StatenIsland_list=count(StatenIsland) 
 
+StatenIsland_list=count(StatenIsland) 
+StatenIsland_list <- subset(StatenIsland_list[,2:3]) 
 head(StatenIsland_list)
 StatenIsland_list=data.frame(StatenIsland_list)
 StatenIsland_list=data.frame("Staten Island", StatenIsland_list)
 head(StatenIsland_list) 
-names(StatenIsland_list)<-c("ListID", "SpeciesID3", "Freq") 
+names(StatenIsland_list)<-c("ListID", "SpeciesID", "Freq") 
 
 
 #Queens Top 10 Species
@@ -79,68 +83,109 @@ Queens=read.csv("Queens.csv")
 Queens
 head(Queens)
 tail(Queens) 
-speciesID4=paste(Queens$Common.Name, Queens$Scientific.Name, sep=" ")
-speciesID4
-Queens_list=count(Queens)
 
+Queens_list=count(Queens)
+Queens_list <- subset(Queens_list[,2:3])  
 head(Queens_list)
 Queens_list=data.frame(Queens_list)
 Queens_list=data.frame("Queens", Queens_list)
 head(Queens_list) 
-names(Queens_list)<-c("ListID", "SpeciesID4", "Freq") 
+names(Queens_list)<-c("ListID", "SpeciesID", "Freq") 
 
 #Manhattan Top 10 Species
 Manhattan=read.csv("Manhattan.csv")
 Manhattan
 head(Manhattan)
 tail(Manhattan) 
-speciesID5=paste(Manhattan$Common.Name, Manhattan$Scientific.Name, sep=" ")
-speciesID5
-Manhattan_list=count(Manhattan)
 
+Manhattan_list=count(Manhattan)
+Manhattan_list <- subset(Manhattan_list[,2:3]) 
 head(Manhattan_list)
 Manhattan_list=data.frame(Manhattan_list)
-Manhattan_list=data.frame("Manhattan", Manhattan_list )
+Manhattan_list=data.frame("Manhattan", Manhattan_list)
 head(Manhattan_list) 
-names(Manhattan_list)<-c("ListID", "SpeciesID5", "Freq") 
+names(Manhattan_list)<-c("ListID", "SpeciesID", "Freq") 
 
 #City Top 10 Species 
 City=read.csv("City.csv")
 City
 head(City)
 tail(City) 
-speciesID6=paste(City$Common.Name, City$Scientific.Name, sep=" ")
-speciesID6
-City_list=count(City)
 
+
+City_list=count(City)
+City_list <- subset(City_list[,2:3]) 
 head(City_list)
 City_list=data.frame(City_list)
-City_list=data.frame("City", City_list )
+City_list=data.frame("City", City_list)
 head(City_list) 
-names(City_list)<-c("ListID", "SpeciesID6", "Freq") 
+names(City_list)<-c("ListID", "SpeciesID", "Freq") 
 
 ```
 
 #Part 3. Master List & Phylogenize 
 ```{r}
 #Combining all data sets into one 
-Top10=rbind(City_list, Queens_list, Manhattan_list, Brooklyn_list, Bronx_list, StatenIsland_list)
-dim(Top10) 
+Top10 <- rbind(City_list, Queens_list, Manhattan_list, Brooklyn_list, Bronx_list, StatenIsland_list)
+dim(Top10)
 
 #run the matrify function 
 CityTree=matrify(Top10)
 CityTree 
+
+
 ```
 
 #Part 4: Annotations & Shannon or Simpson diversity indices 
+
 ```{r}
-simpson2<-diversity(wab1, index = "simpson")
-shannon2<-diversity(wab1, index = "shannon")
-simpson2
-shannon2
-jaccard2 = vegdist(wab1, "jaccard")
-jaccard2
-bray2 = vegdist(wab1, "bray")
-bray2  
+abundance <- as.matrix(CityTree)
+dim(abundance) 
+
+plot(CityTree)
+CityTree
+prunedAB <- prune.sample(abundance, CityTree)
+plot(prunedAB)
+
+par(mfrow = c(2, 2)) 
+for (i in row.names(abundance)) {
+plot(prunedAB, show.tip.label = FALSE, main = i)
+  tiplabels(tip = which(prunedAB$tip.label %in% names(which(abundance [i, ] > 0))), pch=19, cex=1)
+} 
+
+prunedAB
+View(prunedAB)
+
+library(vegan)
+simpson<-diversity(CityTree, index = "simpson")
+shannon<-diversity(CityTree, index = "shannon")
+simpson
+shannon
+jaccard = vegdist(CityTree, "jaccard")
+jaccard
+bray = vegdist(CityTree, "bray")
+bray
+
+
 ```
+Somehow, I was able to get the simpson and shannon index to work. Codes 150 -167 now work. I was able to find that the simpson diversity was a 0.9 for each of the 6 boroughs I looked at this meant that 
+they were all equal in terms of diversity indexes. In this portfolio I decided to look at the most popular trees in NYC.It makes sense that the shannon indexes all equal to each other just because I noticed that all of the species I was looking at were mostly the same except for a few here and there. The simpson value outputed was 0.9 and this meant that the different boroughs were equal in evenness and in abundance. The Shannon divesity output also gave me the same value for all of them which was 2.3025. This value determined the diversity of the different boroughs. It would be interesting if there was some way to input all of the plant species and account for the diversities of the different boroughs. 
+The most interesting measure of diversity became visible in the Jaccard index. This measure revealed the similarity beterrn Manhattan and Staten Island at 0.75. The lowest measure was between Brooklyn and the Bronx and the City's most popular trees. 
+The Bray Index showed a high index between Manhattan and Queens with a value of 0.4 but with a much higher value between Manhattan and Staten Island. 
+
+```{r}
+taxa<-c( "Acer", "Acer rubum", "Acer platanoides", "Pyrus calleryana", "Prunus cerasus", "Gleditsia triacanthos", "Platanus × acerifolia","Quercus palustris", "Sophora", "Tilia cordata", "Prunus cerasus", "Zelkova serrata") 
+
+phylomatic <- phylomatic(taxa = taxa, storedtree ="R20120829", get = 'POST')
+
+plot(phylomatic, no.margin = TRUE) 
+
+newick_fn = "phylomatic"
+write.tree(phylomatic, file=newick_fn)
+```
+After plotting the Phylogenetic Tree I saw that the outgroup is the platanus aceriflora which is the London PlaneTree. 
+
+
+
+
 
